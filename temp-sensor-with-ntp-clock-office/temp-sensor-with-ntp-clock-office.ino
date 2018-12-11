@@ -25,18 +25,20 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define NTP_SERVERS "us.pool.ntp.org", "pool.ntp.org", "time.nist.gov"
 #define NTP_UPDATE_INTERVAL_SEC 5*3600
 #define WATCHDOG_UPDATE_INTERVAL_SEC 1
-#define WATCHDOG_RESET_INTERVAL_SEC 30
+#define WATCHDOG_RESET_INTERVAL_SEC 120
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.15"
+#define FIRMWARE_VERSION "-1.16"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/office/temperature"
 #define MQTT_HUMIDITY_PUB "sensor/office/humidity"
 #define MQTT_VERSION_PUB "sensor/office/version"
 #define MQTT_COMPILE_PUB "sensor/office/compile"
+#define MQTT_HEARTBEAT_SUB "heartbeat/#"
+#define MQTT_HEARTBEAT_TOPIC "heartbeat"
 
 /****************************** DHT 22 Calibration settings *************/
 
@@ -98,6 +100,7 @@ void setup() {
   setup_wifi();
 
   client.setServer(MQTT_SERVER, MQTT_PORT);
+  client.setCallback(callback); //callback is the function that gets called for a topic sub
   
   check_for_updates();
   
@@ -121,6 +124,15 @@ void setup() {
   Serial.print("Next NTP Update: ");
   Serial.print(getDateTime(tick_time)); 
   
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  String strTopic;
+  payload[length] = '\0';
+  strTopic = String((char*)topic);
+  if (strTopic == MQTT_HEARTBEAT_TOPIC) {
+    watchDogCount = 0;
+  }
 }
 
 void setup_wifi() {
@@ -250,8 +262,6 @@ void loop() {
       display.display();
     }
   }
-
-  watchDogCount = 0;
 }
 
 void reconnect() {
@@ -262,10 +272,7 @@ void reconnect() {
     // Attempt to connect
   if (client.connect(MQTT_DEVICE, MQTT_USER, MQTT_PASSWORD)) {
       Serial.println("MQTT broker connected");
-      client.subscribe(MQTT_TEMPERATURE_PUB);
-      client.subscribe(MQTT_HUMIDITY_PUB);
-      client.subscribe(MQTT_VERSION_PUB);
-      client.subscribe(MQTT_COMPILE_PUB);
+      client.subscribe(MQTT_HEARTBEAT_SUB);
       String firmwareVer = String("Firmware Version: ") + String(FIRMWARE_VERSION);
       String compileDate = String("Build Date: ") + String(compile_date);
       client.publish(MQTT_VERSION_PUB, firmwareVer.c_str(), true);
@@ -426,4 +433,3 @@ void my_delay(unsigned long ms) {
     }
   }
 }
-
