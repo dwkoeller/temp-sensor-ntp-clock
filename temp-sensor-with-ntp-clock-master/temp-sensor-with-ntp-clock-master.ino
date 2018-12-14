@@ -30,7 +30,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.16"
+#define FIRMWARE_VERSION "-1.17"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/master/temperature"
@@ -48,9 +48,6 @@ float h,f,h2,f2;//Added %2 for error correction
 
 #define DHTPIN 4        // (D2)
 #define DHTTYPE DHT22   // DHT 22/11 (AM2302), AM2321
-
-#define RELAY_ON 0
-#define RELAY_OFF 1
 
 volatile int watchDogCount = 0;
 
@@ -235,20 +232,18 @@ void loop() {
         Serial.print("Temperature: ");
         Serial.print(f,1);
         Serial.print(" *F\n");
+        str = String(f,1);
+        str.toCharArray(strCh,9);
+        client.publish(MQTT_TEMPERATURE_PUB, strCh, true);
+        str = String(h,1);
+        str.toCharArray(strCh,9);
+        client.publish(MQTT_HUMIDITY_PUB, strCh, true); 
       }
   }
 
   dateTime = getDateTime(0);
   if(dateTime != lastDateTime) {
     lastDateTime = dateTime;
-
-    str = String(f,1);
-    str.toCharArray(strCh,9);
-    client.publish(MQTT_TEMPERATURE_PUB, strCh, true);
-    str = String(h,1);
-    str.toCharArray(strCh,9);
-    client.publish(MQTT_HUMIDITY_PUB, strCh, true); 
-    client.loop();
 
     display.clear();
     if (invertDisplay) {
