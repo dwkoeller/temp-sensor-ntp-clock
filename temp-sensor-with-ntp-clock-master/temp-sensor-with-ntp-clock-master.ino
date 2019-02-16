@@ -30,7 +30,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.17"
+#define FIRMWARE_VERSION "-1.18"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/master/temperature"
@@ -148,11 +148,6 @@ void setup_wifi() {
     my_delay(250);
     Serial.print(".");
     count++;
-    if(count > 50) {
-      WiFiManager wifiManager;
-      wifiManager.resetSettings();
-      wifiManager.autoConnect();
-    }
   }
 
   Serial.println("");
