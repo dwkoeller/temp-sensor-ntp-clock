@@ -30,7 +30,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.18"
+#define FIRMWARE_VERSION "-1.20"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/master/temperature"
@@ -39,6 +39,8 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define MQTT_COMPILE_PUB "sensor/master/compile"
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
+
+#define WATCHDOG_PIN 5  //  D1
 
 /****************************** DHT 22 Calibration settings *************/
 
@@ -49,10 +51,8 @@ float h,f,h2,f2;//Added %2 for error correction
 #define DHTPIN 4        // (D2)
 #define DHTTYPE DHT22   // DHT 22/11 (AM2302), AM2321
 
-volatile int watchDogCount = 0;
-
 // Create event timers to update NTP, temperature and invert OLED disply
-Ticker ticker_time, ticker_temp, ticker_display, ticker_fw, ticker_watchdog;
+Ticker ticker_time, ticker_temp, ticker_display, ticker_fw;
 int32_t tick_time, tick_temp, tick_display, tick_fw;
 
 // flags for ticker functions
@@ -89,6 +89,9 @@ String lastDateTime;
 
 void setup() {
   Serial.begin(115200);
+
+  pinMode(WATCHDOG_PIN, OUTPUT); 
+
   dht.begin();
 
   display.init();
@@ -112,7 +115,6 @@ void setup() {
   ticker_display.attach(1, displayTicker);
   tick_fw = FW_UPDATE_INTERVAL_SEC;
   ticker_fw.attach(1, fwTicker);
-  ticker_watchdog.attach_ms(WATCHDOG_UPDATE_INTERVAL_SEC * 1000, watchdogTicker);
 
   lastDateTime = getDateTime(0);
 
@@ -120,7 +122,9 @@ void setup() {
   Serial.print(getDateTime(0));    
   Serial.print("Next NTP Update: ");
   Serial.print(getDateTime(tick_time)); 
-  
+ 
+  resetWatchdog();
+
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -128,7 +132,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   payload[length] = '\0';
   strTopic = String((char*)topic);
   if (strTopic == MQTT_HEARTBEAT_TOPIC) {
-    watchDogCount = 0;
+    resetWatchdog();
+    Serial.println("Heartbeat received");
   }
 }
 
@@ -233,6 +238,7 @@ void loop() {
         str = String(h,1);
         str.toCharArray(strCh,9);
         client.publish(MQTT_HUMIDITY_PUB, strCh, true); 
+        client.loop();
       }
   }
 
@@ -342,15 +348,6 @@ String getDateTime(time_t offset) {
   return buf;
 }
 
-// Watchdog update ticker
-void watchdogTicker() {
-  watchDogCount++;
-  if(watchDogCount >= WATCHDOG_RESET_INTERVAL_SEC) {
-    Serial.println("Reset system");
-    ESP.restart();  
-  }
-}
-
 String WiFi_macAddressOf(IPAddress aIp) {
   if (aIp == WiFi.localIP())
     return WiFi.macAddress();
@@ -423,4 +420,10 @@ void my_delay(unsigned long ms) {
       start += 1000;
     }
   }
+}
+
+void resetWatchdog() {
+  digitalWrite(WATCHDOG_PIN, HIGH);
+  my_delay(20);
+  digitalWrite(WATCHDOG_PIN, LOW);
 }

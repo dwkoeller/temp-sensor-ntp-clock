@@ -30,7 +30,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.18"
+#define FIRMWARE_VERSION "-1.20"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/office/temperature"
@@ -50,8 +50,6 @@ float h,f,h2,f2;//Added %2 for error correction
 
 #define DHTPIN 4        // (D2)
 #define DHTTYPE DHT22   // DHT 22/11 (AM2302), AM2321
-
-volatile int watchDogCount = 0;
 
 // Create event timers to update NTP, temperature and invert OLED disply
 Ticker ticker_time, ticker_temp, ticker_display, ticker_fw;
@@ -126,7 +124,7 @@ void setup() {
   Serial.print(getDateTime(tick_time)); 
 
   resetWatchdog();
-  
+ 
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
