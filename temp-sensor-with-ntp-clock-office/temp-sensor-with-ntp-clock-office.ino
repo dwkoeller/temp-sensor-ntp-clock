@@ -9,6 +9,8 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
 #include "credentials.h" // Place credentials for wifi and mqtt in this file
+#include "certificates.h" // Place certificates for mqtt in this file
+
 
 //This can be used to output the date the code was compiled
 const char compile_date[] = __DATE__ " " __TIME__;
@@ -20,7 +22,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 //#define MQTT_USER "" //enter your MQTT username
 //#define MQTT_PASSWORD "" //enter your password
 #define MQTT_DEVICE "temp-sensor-office" // Enter your MQTT device
-#define MQTT_PORT 1883 // Enter your MQTT server port.
+#define MQTT_SSL_PORT 8883 // Enter your MQTT server port.
 #define MQTT_SOCKET_TIMEOUT 120
 #define NTP_SERVERS "us.pool.ntp.org", "pool.ntp.org", "time.nist.gov"
 #define NTP_UPDATE_INTERVAL_SEC 5*3600
@@ -30,7 +32,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.20"
+#define FIRMWARE_VERSION "-1.30"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/office/temperature"
@@ -75,7 +77,7 @@ struct dstRule EndRule = {"EST", First, Sun, Nov, 2, 0};       // Standard time 
 simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
 // Init WiFi
-WiFiClient espClient;
+WiFiClientSecure espClient;
 
 // Init MQTT
 PubSubClient client(espClient);
@@ -99,7 +101,7 @@ void setup() {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   setup_wifi();
 
-  client.setServer(MQTT_SERVER, MQTT_PORT);
+  client.setServer(MQTT_SERVER, MQTT_SSL_PORT);
   client.setCallback(callback); //callback is the function that gets called for a topic sub
   
   check_for_updates();
@@ -155,6 +157,9 @@ void setup_wifi() {
     count++;
   }
 
+  espClient.setCertificate(certificates_esp8266_bin_crt, certificates_esp8266_bin_crt_len);
+  espClient.setPrivateKey(certificates_esp8266_bin_key, certificates_esp8266_bin_key_len);
+  
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
