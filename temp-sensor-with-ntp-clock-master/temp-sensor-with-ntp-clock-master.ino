@@ -18,7 +18,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.32"
+#define FIRMWARE_VERSION "-1.33"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/master/temperature"
@@ -54,7 +54,7 @@ float h,f,h2,f2;//Added %2 for error correction
 
 // Create event timers to update NTP, temperature and invert OLED disply
 Ticker ticker_time, ticker_temp, ticker_display, ticker_fw;
-int32_t tick_time, tick_temp, tick_display, tick_fw;
+int32_t tick_time, tick_temp, tick_display;
 
 // flags for ticker functions
 bool readyForNtpUpdate = false;
@@ -113,8 +113,6 @@ void setup() {
   ticker_temp.attach(1, tempTicker);
   tick_display = DISPLAY_INVERT_INTERVAL_SEC;
   ticker_display.attach(1, displayTicker);
-  tick_fw = FW_UPDATE_INTERVAL_SEC;
-  ticker_fw.attach(1, fwTicker);
 
   lastDateTime = getDateTime(0);
 
