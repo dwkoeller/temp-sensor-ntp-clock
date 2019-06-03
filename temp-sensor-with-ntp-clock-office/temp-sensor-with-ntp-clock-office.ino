@@ -18,7 +18,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.31"
+#define FIRMWARE_VERSION "-1.32"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/office/temperature"
@@ -27,6 +27,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define MQTT_COMPILE_PUB "sensor/office/compile"
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
+#define MQTT_HEARTBEAT_PUB "sensor/office/heartbeat"
 
 #define WATCHDOG_PIN 5  //  D1
 
@@ -133,6 +134,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (strTopic == MQTT_HEARTBEAT_TOPIC) {
     resetWatchdog();
     Serial.println("Heartbeat received");
+    client.publish(MQTT_HEARTBEAT_PUB, "Heartbeat Received");
   }
 }
 
