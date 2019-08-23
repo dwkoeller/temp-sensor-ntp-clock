@@ -18,7 +18,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.33"
+#define FIRMWARE_VERSION "-1.40"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define MQTT_TEMPERATURE_PUB "sensor/office/temperature"
