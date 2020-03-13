@@ -20,8 +20,6 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define FIRMWARE_VERSION "-1.44"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
-#define MQTT_TEMPERATURE_PUB "sensor/up-closet/temperature"
-#define MQTT_HUMIDITY_PUB "sensor/up-closet/humidity"
 #define TEMPERATURE "up-closet_temperature"
 #define TEMPERATURE_NAME "Upstairs Closet Temperature"
 #define HUMIDITY "up_closet_humidity"
@@ -29,7 +27,6 @@ const char compile_date[] = __DATE__ " " __TIME__;
 
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
-#define MQTT_HEARTBEAT_PUB "sensor/up-closet/heartbeat"
 #define MQTT_DISCOVERY_SENSOR_PREFIX  "homeassistant/sensor/"
 #define HA_TELEMETRY                         "ha"
 

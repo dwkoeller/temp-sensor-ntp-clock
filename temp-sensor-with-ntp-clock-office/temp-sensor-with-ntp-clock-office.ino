@@ -28,7 +28,6 @@ const char compile_date[] = __DATE__ " " __TIME__;
 
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
-#define MQTT_HEARTBEAT_PUB "sensor/office/heartbeat"
 #define MQTT_DISCOVERY_SENSOR_PREFIX  "homeassistant/sensor/"
 #define HA_TELEMETRY                         "ha"
 

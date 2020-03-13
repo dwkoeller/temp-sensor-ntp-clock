@@ -18,16 +18,18 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.40"
+#define FIRMWARE_VERSION "-1.41"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
-#define MQTT_TEMPERATURE_PUB "sensor/master/temperature"
-#define MQTT_HUMIDITY_PUB "sensor/master/humidity"
-#define MQTT_VERSION_PUB "sensor/master/version"
-#define MQTT_COMPILE_PUB "sensor/master/compile"
+#define TEMPERATURE "master_closet_temperature"
+#define TEMPERATURE_NAME "Master Closet Temperature"
+#define HUMIDITY "master_closet_humidity"
+#define HUMIDITY_NAME "Master Closet Humidity"
+
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
-#define MQTT_HEARTBEAT_PUB "sensor/master/heartbeat"
+#define MQTT_DISCOVERY_SENSOR_PREFIX  "homeassistant/sensor/"
+#define HA_TELEMETRY                         "ha"
 
 #define WATCHDOG_PIN 5  //  D1
 
@@ -62,6 +64,7 @@ bool readyForFwUpdate = false;
 bool readyForTempUpdate = false;
 bool readyForDisplayInvert = false;
 bool invertDisplay = false;
+bool registered = false;
 
 // Initialize DHT
 DHT dht(DHTPIN, DHTTYPE);
@@ -125,14 +128,18 @@ void setup() {
 
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
   String strTopic;
-  payload[length] = '\0';
-  strTopic = String((char*)topic);
+  String payload;
+
+  for (uint8_t i = 0; i < p_length; i++) {
+    payload.concat((char)p_payload[i]);
+  }
+
+  strTopic = String((char*)p_topic);
   if (strTopic == MQTT_HEARTBEAT_TOPIC) {
     resetWatchdog();
-    Serial.println("Heartbeat received");
-    client.publish(MQTT_HEARTBEAT_PUB, "Heartbeat Received");
+    updateTelemetry(payload);
   }
 }
 
@@ -208,10 +215,10 @@ void loop() {
         Serial.print(" *F\n");
         str = String(f,1);
         str.toCharArray(strCh,9);
-        client.publish(MQTT_TEMPERATURE_PUB, strCh, true);
+        updateSensor(TEMPERATURE, strCh);
         str = String(h,1);
         str.toCharArray(strCh,9);
-        client.publish(MQTT_HUMIDITY_PUB, strCh, true); 
+        updateSensor(HUMIDITY, strCh);
         client.loop();
       }
   }
@@ -232,7 +239,14 @@ void loop() {
       display.display();
     }
   }
-
+  if (! registered) {
+    registerTelemetry();
+    updateTelemetry("Unknown");
+    createSensors(TEMPERATURE, TEMPERATURE_NAME, "temperature", "°F");
+    createSensors(HUMIDITY, HUMIDITY_NAME, "humidity", "%");
+    registered = true;
+  }  
+  
 }
 
 // Update NTP Information
@@ -287,4 +301,30 @@ String getDateTime(time_t offset) {
   int hour = (timeinfo->tm_hour+11)%12+1;  // take care of noon and midnight
   sprintf(buf, "%02d/%02d/%04d %02d:%02d:%02d%s\n",timeinfo->tm_mon+1, timeinfo->tm_mday, timeinfo->tm_year+1900, hour, timeinfo->tm_min, timeinfo->tm_sec, timeinfo->tm_hour>=12?"pm":"am");
   return buf;
+}
+
+void createSensors(String sensor, String sensor_name, String device_class, String unit) {
+  String topic = String(MQTT_DISCOVERY_SENSOR_PREFIX) + sensor + "/config";
+  String message = String("{\"name\": \"") + sensor_name +
+                   String("\", \"unit_of_measurement\": \"") + unit +
+                   String("\", \"state_topic\": \"") + String(MQTT_DISCOVERY_SENSOR_PREFIX) + sensor +
+                   String("/state\", \"device_class\": \"" + device_class + "\"}");
+  Serial.print(F("MQTT - "));
+  Serial.print(topic);
+  Serial.print(F(" : "));
+  Serial.println(message.c_str());
+
+  client.publish(topic.c_str(), message.c_str(), true);  
+
+}
+
+void updateSensor(String sensor, String state) {
+  String topic = String(MQTT_DISCOVERY_SENSOR_PREFIX) + sensor + "/state";
+  
+  Serial.print(F("MQTT - "));
+  Serial.print(topic);
+  Serial.print(F(" : "));
+  Serial.println(state);
+  client.publish(topic.c_str(), state.c_str(), true);
+
 }
