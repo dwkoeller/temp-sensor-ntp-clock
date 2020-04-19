@@ -17,7 +17,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.44"
+#define FIRMWARE_VERSION "-1.45"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define TEMPERATURE "up-closet_temperature"
@@ -177,6 +177,7 @@ void createSensors(String sensor, String sensor_name, String device_class, Strin
   String topic = String(MQTT_DISCOVERY_SENSOR_PREFIX) + sensor + "/config";
   String message = String("{\"name\": \"") + sensor_name +
                    String("\", \"unit_of_measurement\": \"") + unit +
+                   String("\", \"unique_id\": \"") + sensor + getUUID() +
                    String("\", \"state_topic\": \"") + String(MQTT_DISCOVERY_SENSOR_PREFIX) + sensor +
                    String("/state\", \"device_class\": \"" + device_class + "\"}");
   Serial.print(F("MQTT - "));
