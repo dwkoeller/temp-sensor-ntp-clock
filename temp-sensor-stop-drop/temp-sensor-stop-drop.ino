@@ -10,14 +10,12 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define MQTT_DEVICE "temp-sensor-stop-drop" // Enter your MQTT device
 #define MQTT_SSL_PORT 8883 // Enter your MQTT server port.
 #define MQTT_SOCKET_TIMEOUT 120
-#define NTP_SERVERS "us.pool.ntp.org", "pool.ntp.org", "time.nist.gov"
 #define NTP_UPDATE_INTERVAL_SEC 5*3600
 #define WATCHDOG_UPDATE_INTERVAL_SEC 1
 #define WATCHDOG_RESET_INTERVAL_SEC 120
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
-#define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.45"
+#define FIRMWARE_VERSION "-2.00"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define TEMPERATURE "stop_drop_temperature"
@@ -27,6 +25,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
+#define MQTT_UPDATE_REQUEST "update"
 #define MQTT_DISCOVERY_SENSOR_PREFIX  "homeassistant/sensor/"
 #define HA_TELEMETRY                         "ha"
 
@@ -77,6 +76,18 @@ void setup() {
 
   setup_wifi();
 
+  IPAddress result;
+  int err = WiFi.hostByName(MQTT_SERVER, result) ;
+  if(err == 1){
+        Serial.print("MQTT Server IP address: ");
+        Serial.println(result);
+        MQTTServerIP = result.toString();
+  } else {
+        Serial.print("Error code: ");
+        Serial.println(err);
+  }  
+
+  client.setBufferSize(512);
   client.setServer(MQTT_SERVER, MQTT_SSL_PORT);
   client.setCallback(callback); //callback is the function that gets called for a topic sub
   
@@ -102,8 +113,11 @@ void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
   strTopic = String((char*)p_topic);
   if (strTopic == MQTT_HEARTBEAT_TOPIC) {
     resetWatchdog();
-    updateTelemetry(payload);
-  }
+    updateTelemetry(payload);      
+    if (payload.equals(String(MQTT_UPDATE_REQUEST))) {
+      checkForUpdates();
+    }    
+  }  
 }
 
 void loop() {

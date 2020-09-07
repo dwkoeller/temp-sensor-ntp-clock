@@ -17,8 +17,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
 #define DISPLAY_INVERT_INTERVAL_SEC 30
-#define UPDATE_SERVER "http://192.168.100.15/firmware/"
-#define FIRMWARE_VERSION "-1.45"
+#define FIRMWARE_VERSION "-2.01"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define TEMPERATURE "master_closet_temperature"
@@ -28,6 +27,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 
 #define MQTT_HEARTBEAT_SUB "heartbeat/#"
 #define MQTT_HEARTBEAT_TOPIC "heartbeat"
+#define MQTT_UPDATE_REQUEST "update"
 #define MQTT_DISCOVERY_SENSOR_PREFIX  "homeassistant/sensor/"
 #define HA_TELEMETRY                         "ha"
 
@@ -101,7 +101,19 @@ void setup() {
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   setup_wifi();
+  
+  IPAddress result;
+  int err = WiFi.hostByName(MQTT_SERVER, result) ;
+  if(err == 1){
+        Serial.print("MQTT Server IP address: ");
+        Serial.println(result);
+        MQTTServerIP = result.toString();
+  } else {
+        Serial.print("Error code: ");
+        Serial.println(err);
+  }  
 
+  client.setBufferSize(512);
   client.setServer(MQTT_SERVER, MQTT_SSL_PORT);
   client.setCallback(callback); //callback is the function that gets called for a topic sub
   
@@ -139,8 +151,11 @@ void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
   strTopic = String((char*)p_topic);
   if (strTopic == MQTT_HEARTBEAT_TOPIC) {
     resetWatchdog();
-    updateTelemetry(payload);
-  }
+    updateTelemetry(payload);      
+    if (payload.equals(String(MQTT_UPDATE_REQUEST))) {
+      checkForUpdates();
+    }    
+  }  
 }
 
 void drawDHT(float h, float f) {
