@@ -16,7 +16,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define WATCHDOG_RESET_INTERVAL_SEC 120
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
-#define FIRMWARE_VERSION "-3.00"
+#define FIRMWARE_VERSION "-2.00"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define TEMPERATURE "up-closet_temperature"
