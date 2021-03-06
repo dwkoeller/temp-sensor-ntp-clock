@@ -16,7 +16,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 #define WATCHDOG_RESET_INTERVAL_SEC 120
 #define FW_UPDATE_INTERVAL_SEC 24*3600
 #define TEMP_UPDATE_INTERVAL_SEC 6
-#define FIRMWARE_VERSION "-2.00"
+#define FIRMWARE_VERSION "-2.01"
 
 /****************************** MQTT TOPICS (change these topics as you wish)  ***************************************/
 #define TEMPERATURE "outdoor_temperature"
@@ -43,7 +43,7 @@ const char compile_date[] = __DATE__ " " __TIME__;
 
 /****************************** DHT 22 Calibration settings *************/
 
-float temp_offset = -2;
+float temp_offset = 5;
 float hum_offset = 0;
 float h,f,h2,f2;//Added %2 for error correction
 
